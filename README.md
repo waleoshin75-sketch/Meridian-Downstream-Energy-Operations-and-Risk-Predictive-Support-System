@@ -171,7 +171,7 @@ Before touching anything I profiled every table. The audit found problems in all
 | Censored lab results | 310 sulphur readings written as `<10`, `ND` or `BDL` |
 
 <p align="center">
-  <img src="images/eda_0_missing.png" alt="Missing values by table, before cleaning" width="100%">
+  <img width="1245" height="518" alt="eda_0_missing" src="https://github.com/user-attachments/assets/b4b09cd0-32df-4a66-8b44-28ff7cab7cb8" />
 </p>
 <p align="center"><em>Missing values by table, before cleaning</em></p>
 
@@ -837,7 +837,7 @@ print("\nSaved: meridian_features.pkl  (dictionary 'fe' holds the 8 tables with 
 The eight tables are joined in a **star schema**: two dimensions (`dim_sites`, `dim_assets`) plus a generated `dim_date`, with the fact tables around them. The integrity check passed: every fact row finds its parent (100% match) and every parent key is unique.
 
 <p align="center">
-  <img src="images/star_schema.png" alt="Star schema: dimensions in the centre, fact tables around them" width="100%">
+  <img width="2235" height="1110" alt="star_schema" src="https://github.com/user-attachments/assets/88614947-c00f-4ae9-ad82-e71656b2b624" />
 </p>
 <p align="center"><em>Star schema: dimensions in the centre, fact tables around them</em></p>
 
@@ -993,27 +993,27 @@ One figure per business objective. Five findings stood out:
 ### Charts
 
 <p align="center">
-  <img src="images/eda_1_maintenance.png" alt="Objective 1: what comes before a breakdown" width="100%">
+  <img width="2366" height="670" alt="eda_1_maintenance" src="https://github.com/user-attachments/assets/c2aa68a0-bec6-4b82-840c-53281a6c4de9" />
 </p>
 <p align="center"><em>Objective 1: what comes before a breakdown</em></p>
 
 <p align="center">
-  <img src="images/eda_2_margin.png" alt="Objective 2: margin by crude grade, sulphur and crack spread" width="100%">
+  <img width="2365" height="670" alt="eda_2_margin" src="https://github.com/user-attachments/assets/94f1542f-af93-4662-ba89-849c8ffac270" />
 </p>
 <p align="center"><em>Objective 2: margin by crude grade, sulphur and crack spread</em></p>
 
 <p align="center">
-  <img src="images/eda_3_delivery.png" alt="Objective 3: late rate by promised speed, weather and traffic" width="100%">
+  <img width="2365" height="670" alt="eda_3_delivery" src="https://github.com/user-attachments/assets/1db05289-6306-4411-aa95-cf603fd2dd3f" />
 </p>
 <p align="center"><em>Objective 3: late rate by promised speed, weather and traffic</em></p>
 
 <p align="center">
-  <img src="images/eda_4_quality.png" alt="Objective 4: off-spec rate by water, dose and storage" width="100%">
+  <img width="2366" height="670" alt="eda_4_quality" src="https://github.com/user-attachments/assets/412403c9-d539-4579-b322-6b8dd0059577" />
 </p>
 <p align="center"><em>Objective 4: off-spec rate by water, dose and storage</em></p>
 
 <p align="center">
-  <img src="images/eda_5_inventory.png" alt="Objective 5: tank-day gaps" width="100%">
+  <img width="2365" height="670" alt="eda_5_inventory" src="https://github.com/user-attachments/assets/12c65386-1939-4f43-bb79-eae70c86440f" />
 </p>
 <p align="center"><em>Objective 5: tank-day gaps</em></p>
 
@@ -2223,27 +2223,27 @@ Which inputs move with the outcome? For each objective I compare Random Forest f
 ### Charts
 
 <p align="center">
-  <img src="images/obj1_features.png" alt="Objective 1: maintenance risk drivers" width="100%">
+  <img width="2225" height="1379" alt="obj1_features" src="https://github.com/user-attachments/assets/1ae4f746-a364-48f9-929d-0fb895d7031d" />
 </p>
 <p align="center"><em>Objective 1: maintenance risk drivers</em></p>
 
 <p align="center">
-  <img src="images/obj2_features.png" alt="Objective 2: margin drivers and predicted vs actual" width="100%">
+  <img width="2225" height="1379" alt="obj2_features" src="https://github.com/user-attachments/assets/3c69177e-119d-4494-bb53-8a8ddb889927" />
 </p>
 <p align="center"><em>Objective 2: margin drivers and predicted vs actual</em></p>
 
 <p align="center">
-  <img src="images/obj3_features.png" alt="Objective 3: delivery risk drivers" width="100%">
+  <img width="2225" height="1379" alt="obj3_features" src="https://github.com/user-attachments/assets/fd38f96b-6aec-4578-9307-173b34c4862a" />
 </p>
 <p align="center"><em>Objective 3: delivery risk drivers</em></p>
 
 <p align="center">
-  <img src="images/obj4_features.png" alt="Objective 4: off-spec risk drivers" width="100%">
+  <img width="2225" height="1379" alt="obj4_features" src="https://github.com/user-attachments/assets/879eb7c7-15c6-4336-a8ab-ec472c7c41cf" />
 </p>
 <p align="center"><em>Objective 4: off-spec risk drivers</em></p>
 
 <p align="center">
-  <img src="images/obj5_features.png" alt="Objective 5: unusual tank-days" width="100%">
+  <img width="2225" height="1379" alt="obj5_features" src="https://github.com/user-attachments/assets/083da5bf-5491-49e1-b7f8-77d021474c9f" />
 </p>
 <p align="center"><em>Objective 5: unusual tank-days</em></p>
 
@@ -2702,27 +2702,27 @@ Share of each anomaly type caught:
 ### Charts
 
 <p align="center">
-  <img src="images/obj1_evaluation.png" alt="Objective 1: evaluation" width="100%">
+  <img width="1945" height="1447" alt="obj1_evaluation" src="https://github.com/user-attachments/assets/8408100c-8667-4395-8c26-a313ede463cc" />
 </p>
 <p align="center"><em>Objective 1: evaluation</em></p>
 
 <p align="center">
-  <img src="images/obj2_evaluation.png" alt="Objective 2: evaluation" width="100%">
+  <img width="1945" height="1379" alt="obj2_evaluation" src="https://github.com/user-attachments/assets/579dd254-f83b-4954-bd97-733f22d2c923" />
 </p>
 <p align="center"><em>Objective 2: evaluation</em></p>
 
 <p align="center">
-  <img src="images/obj3_evaluation.png" alt="Objective 3: evaluation" width="100%">
+  <img width="1945" height="1447" alt="obj3_evaluation" src="https://github.com/user-attachments/assets/d8777f41-f0b7-4899-a987-eb86a554a1c1" />
 </p>
 <p align="center"><em>Objective 3: evaluation</em></p>
 
 <p align="center">
-  <img src="images/obj4_evaluation.png" alt="Objective 4: evaluation" width="100%">
+  <img width="1945" height="1447" alt="obj4_evaluation" src="https://github.com/user-attachments/assets/eb1845ad-82fc-461b-8230-7145ba794ac9" />
 </p>
 <p align="center"><em>Objective 4: evaluation</em></p>
 
 <p align="center">
-  <img src="images/obj5_evaluation.png" alt="Objective 5: evaluation" width="100%">
+  <img width="2085" height="1447" alt="obj5_evaluation" src="https://github.com/user-attachments/assets/0aa9519f-e09f-4b00-8b60-5db7f537b09d" />
 </p>
 <p align="center"><em>Objective 5: evaluation</em></p>
 
@@ -3217,7 +3217,7 @@ The model's top-quarter days really earn 6.84 USD/bbl more than its bottom-quart
 ### Charts
 
 <p align="center">
-  <img src="images/business_analysis.png" alt="Business analysis: value by objective" width="100%">
+  <img width="2434" height="1447" alt="business_analysis" src="https://github.com/user-attachments/assets/ec77e22d-c615-4ba2-b85d-2b0aa8bbe3f7" />
 </p>
 <p align="center"><em>Business analysis: value by objective</em></p>
 
@@ -3481,7 +3481,7 @@ Before training, every business objective was turned into a machine learning obj
 ### Charts
 
 <p align="center">
-  <img src="images/ml_objectives.png" alt="Success bars vs achieved results" width="100%">
+  <img width="1806" height="938" alt="ml_objectives" src="https://github.com/user-attachments/assets/c5c88268-4397-4100-9859-08de57aabcc8" />
 </p>
 <p align="center"><em>Success bars vs achieved results</em></p>
 
@@ -3823,12 +3823,6 @@ The saved files power [`app.py`](app.py), a single file with seven pages:
 
 The app finds the model folder on its own, whatever it is called. Risk levels use cut-offs from the test period, so "High" means "in the riskiest group", not "certain".
 
-**Run it yourself**
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
 
 `requirements.txt` pins `scikit-learn==1.6.1`, the version that trained the saved files, so loading raises no version warning.
 
@@ -3848,19 +3842,6 @@ A simple Streamlit app with one page per business objective:
     4  Off-spec risk      -> will this blend batch fail specification?
     5  Inventory check    -> is this tank-day a possible loss, theft or metering error?
 
-HOW TO RUN
-    1. Put this file (app.py) in a folder, and put the files from your Step 18 download in a folder next to it.
-       The folder can have any name (model, models, meridian_model_package...); the app finds it by itself:
-
-           meridian_app/
-               app.py
-               model/                       <- the .joblib files from your Step 18 download
-                   obj1_model.joblib, obj1_scaler.joblib, obj1_features.joblib ... (and so on)
-                   model_registry.joblib
-
-    2. In the VS Code terminal:
-           pip install streamlit pandas numpy joblib scikit-learn==1.6.1
-           streamlit run app.py
 
 How it works (short version): you type in the things a person would know (readings, distances, volumes).
 The app turns them into the exact columns the saved model was trained on, fills anything you did not
@@ -4391,7 +4372,7 @@ st.sidebar.caption("Decision support only. Built from the Meridian ML project (s
 - **Delivery is the thinnest business case.** It can lose money if actions cost more than assumed.
 
 <p align="center">
-  <img src="images/key_findings.png" alt="Key findings by objective" width="100%">
+  <img width="2392" height="1447" alt="key_findings" src="https://github.com/user-attachments/assets/f2446ae7-22d8-4963-a322-53bc14373aae" />
 </p>
 <p align="center"><em>Key findings by objective</em></p>
 
@@ -4446,7 +4427,7 @@ Resampling each test period 500 times gives a 90% range of **$2.96M to $5.72M** 
 ### Charts
 
 <p align="center">
-  <img src="images/impact.png" alt="Impact: operational change and value under three scenarios" width="100%">
+  <img width="2155" height="1447" alt="impact" src="https://github.com/user-attachments/assets/0778b4ab-8afc-4dd9-aea6-6d24035bb721" />
 </p>
 <p align="center"><em>Impact: operational change and value under three scenarios</em></p>
 
