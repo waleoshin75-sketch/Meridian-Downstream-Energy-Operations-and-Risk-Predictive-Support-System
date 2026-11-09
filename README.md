@@ -22,6 +22,8 @@ I took eight messy operational tables from a fictional downstream oil and gas co
 | Reduce off-spec product and rework cost | Logistic Regression | Checking the riskiest 20% of batches catches **48%** of off-spec batches. ROC AUC 0.733 |
 | Detect product loss, theft and metering errors | Isolation Forest, plus a simple rule | Isolation Forest PR AUC 0.401. A plain "gap over 1%" rule scores **0.987** and beats all three models |
 
+**Scorecard:** 4 of 5 objectives met their success bars and 1 was partly met (section 19).
+
 **What it is worth:** about **$4.2M a year net** at stated assumptions (sampling range $3.0M to $5.7M), 90% of it from maintenance. These are indicative figures built on assumed unit costs, not company records.
 
 The data is synthetic and was built with realistic quality problems. Two of the five models (breakdowns and off-spec batches) are ranking tools with wide uncertainty, and for inventory the simple rule beat machine learning. I report all of that as it is.
@@ -48,12 +50,13 @@ The data is synthetic and was built with realistic quality problems. Two of the 
 16. [Compare X and Y](#16-compare-x-and-y)
 17. [Evaluate Model](#17-evaluate-model)
 18. [Business Analysis](#18-business-analysis)
-19. [Save Model, Scaler and Features](#19-save-model-scaler-and-features)
-20. [Download Model, Scaler and Features](#20-download-model-scaler-and-features)
-21. [Key Findings and Insights](#21-key-findings-and-insights)
-22. [Recommendations](#22-recommendations)
-23. [Impact](#23-impact)
-24. [Conclusion](#24-conclusion)
+19. [Machine Learning Objectives](#19-machine-learning-objectives)
+20. [Save Model, Scaler and Features](#20-save-model-scaler-and-features)
+21. [Download Model, Scaler and Features](#21-download-model-scaler-and-features)
+22. [Key Findings and Insights](#22-key-findings-and-insights)
+23. [Recommendations](#23-recommendations)
+24. [Impact](#24-impact)
+25. [Conclusion](#25-conclusion)
 
 ---
 
@@ -79,7 +82,7 @@ Meridian Downstream Energy is a fictional multinational refiner and fuel distrib
 
 ```
 ├── README.md
-├── app.py                          the Streamlit app (section 20)
+├── app.py                          the Streamlit app (section 21)
 ├── requirements.txt
 ├── images/                         every chart shown in this README
 ├── Meridian_Downstream_Consolidated.xlsx   the raw workbook (8 data sheets + plan sheets)
@@ -2694,19 +2697,7 @@ Share of each anomaly type caught:
 
 **The honest finding:** the best machine learning detector is Isolation Forest, but a one-line rule beats it. So the rule becomes the daily control and the model stays as a second opinion.
 
-### Did each model meet its objective?
-
-I set success bars before looking at results (`ML_Objectives` sheet).
-
-| # | Objective | Success bar | Achieved | Verdict |
-|---|---|---|---|---|
-| 1 | Maintenance | Lift in top 10% of at least 3, share caught of at least 0.3 | 3.8 and 0.38 | Met |
-| 2 | Margin | R² of at least 0.8, MAE cut vs last week of at least 0.3 | 0.85 and 0.52 | Met |
-| 3 | Delivery | ROC AUC of at least 0.75, share caught in top 20% of at least 0.5 | 0.79 and 0.62 | Met |
-| 4 | Off-spec | ROC AUC of at least 0.70, share caught in top 20% of at least 0.4 | 0.73 and 0.48 | Met |
-| 5 | Inventory | PR AUC at least 5x chance, and at least match the simple rule | 11.1x chance, but only 0.41 of the rule | Partly met |
-
-**4 of 5 met, 1 partly met.**
+**Did each model meet its success bars?** Section 19 sets the bars for each objective and scores the results against them: 4 of 5 met, 1 partly met.
 
 ### Charts
 
@@ -2734,11 +2725,6 @@ I set success bars before looking at results (`ML_Objectives` sheet).
   <img src="images/obj5_evaluation.png" alt="Objective 5: evaluation" width="100%">
 </p>
 <p align="center"><em>Objective 5: evaluation</em></p>
-
-<p align="center">
-  <img src="images/ml_objectives.png" alt="Success bars vs achieved results" width="100%">
-</p>
-<p align="center"><em>Success bars vs achieved results</em></p>
 
 ### Code: evaluate model
 
@@ -3197,123 +3183,6 @@ pd.to_pickle({"results": res, "best_model": best, "recall_by_type": by_type}, "o
 print(f"\nSaved: evaluate_obj5.png, obj5_evaluation.csv   |   chosen detector: {best}")
 ```
 
-
-#### Success bars vs results (scorecard)
-
-```python
-# STEP 16: MACHINE LEARNING OBJECTIVES
-# For each of the five business objectives: what ML task was set, which model was chosen, and did it reach the success bar?
-# The success bars below were set for this project (editable). Every result comes from the Step 14 evaluation files,
-# so nothing is re-trained here.
-import os
-import re
-import warnings
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-
-warnings.filterwarnings("ignore")
-
-# ------------------------------------------------------------------ SUCCESS BARS (edit freely)
-BAR = {
-    1: {"Lift over random in the top 10%": 3.0, "Share of breakdowns caught in the top 10%": 0.30},
-    2: {"R2": 0.80, "MAE cut vs last week's margin": 0.30},
-    3: {"ROC AUC": 0.75, "Share of late trips caught in the top 20%": 0.50},
-    4: {"ROC AUC": 0.70, "Share of off-spec batches caught in the top 20%": 0.40},
-    5: {"PR AUC as a multiple of chance": 5.0, "Best model PR AUC / simple gap rule PR AUC": 1.0},
-}
-
-def load(n):
-    p = f"obj{n}_evaluation.pkl"
-    if not os.path.exists(p):
-        raise FileNotFoundError(f"{p} is missing. Run Step 14 for Objective {n} first, then re-run this cell.")
-    return pd.read_pickle(p)
-
-ev = {n: load(n) for n in range(1, 6)}
-best = {n: ev[n]["best_model"] for n in ev}
-
-def row(n):
-    r = ev[n]["results"]; return r[r["model"] == best[n]].iloc[0]
-def plan_row(n, label):
-    pl = ev[n]["inspection_plan"]; return pl[pl.iloc[:, 0].astype(str).str.strip() == label].iloc[0]
-
-ACH = {}   # achieved values
-r1, r2, r3, r4, r5 = row(1), row(2), row(3), row(4), row(5)
-pl1, pl3, pl4 = plan_row(1, "10%"), plan_row(3, "20%"), plan_row(4, "20%")
-ACH[1] = {"Lift over random in the top 10%": float(pl1["lift_vs_random"]), "Share of breakdowns caught in the top 10%": float(pl1["recall_%"]) / 100}
-rr = ev[2]["results"]; base2 = rr[rr["model"].str.contains("last week")].iloc[0]
-ACH[2] = {"R2": float(r2["R2"]), "MAE cut vs last week's margin": 1 - float(r2["MAE"]) / float(base2["MAE"])}
-ACH[3] = {"ROC AUC": float(r3["ROC_AUC"]), "Share of late trips caught in the top 20%": float(pl3["recall_%"]) / 100}
-ACH[4] = {"ROC AUC": float(r4["ROC_AUC"]), "Share of off-spec batches caught in the top 20%": float(pl4["recall_%"]) / 100}
-res5 = ev[5]["results"]; rule5 = res5[res5["model"].str.startswith("Rule")].iloc[0]
-n_anom = sum(int(re.search(r"n=(\d+)", i).group(1)) for i in ev[5]["recall_by_type"].index)
-n_days = len(globals()["pred5"]) if "pred5" in globals() else (len(pd.read_pickle("obj5_scores.pkl")) if os.path.exists("obj5_scores.pkl") else 10182)
-chance5 = n_anom / n_days
-ACH[5] = {"PR AUC as a multiple of chance": float(r5["PR_AUC"]) / chance5, "Best model PR AUC / simple gap rule PR AUC": float(r5["PR_AUC"]) / float(rule5["PR_AUC"])}
-
-TASKS = {
-    1: ("Predictive maintenance", "Classification", "breakdown_next_30d", "asset-month", "Asset Integrity and Maintenance", "Cut unplanned downtime and maintenance cost"),
-    2: ("Margin prediction", "Regression", "gross_margin_usd_per_bbl", "refinery-day", "Refining and Planning", "Maximise refinery yield and gross margin"),
-    3: ("Late delivery prediction", "Classification", "late_delivery", "trip", "Supply and Distribution", "Raise on-time delivery and cut distribution cost"),
-    4: ("Off-spec batch prediction", "Classification", "off_spec", "batch", "Quality and Blending", "Reduce off-spec product and rework cost"),
-    5: ("Inventory anomaly detection", "Unsupervised anomaly detection", "none (checked against answer key afterwards)", "tank-day", "Terminal Operations and Security", "Detect product loss, theft and metering errors"),
-}
-NOTE = {
-    1: f"Wide uncertainty: PR AUC 95% range {r1['PR_AUC_95%_range']}. Use as a ranking aid, not a yes/no verdict.",
-    2: "Linear Ridge beat the tree models, so the margin relationship is largely linear. Forecast only; planners still decide the crude.",
-    3: f"PR AUC 95% range {r3['PR_AUC_95%_range']}. Best of the four, but the other models are close.",
-    4: f"Weakest classifier: PR AUC 95% range {r4['PR_AUC_95%_range']}, so the gain over random is real but modest.",
-    5: "Models find recording errors and some theft, but a plain 'gap over 1%' rule beats all three. Keep the rule as the control, the model as a second opinion.",
-}
-
-rows, flat = [], []
-for n in range(1, 6):
-    ok = {k: ACH[n][k] >= v for k, v in BAR[n].items()}
-    verdict = "Met" if all(ok.values()) else ("Partly met" if any(ok.values()) else "Not met")
-    t = TASKS[n]
-    headline = {1: f"PR AUC {r1['PR_AUC']}, ROC AUC {r1['ROC_AUC']}", 2: f"MAE {r2['MAE']} USD/bbl, RMSE {r2['RMSE']}, R2 {r2['R2']}",
-                3: f"PR AUC {r3['PR_AUC']}, ROC AUC {r3['ROC_AUC']}", 4: f"PR AUC {r4['PR_AUC']}, ROC AUC {r4['ROC_AUC']}",
-                5: f"PR AUC {r5['PR_AUC']} (chance {chance5:.3f}), ROC AUC {r5['ROC_AUC']}"}[n]
-    rows.append({"objective": n, "business_objective": t[5], "owner": t[4], "ml_task": t[0], "ml_type": t[1], "target": t[2], "grain": t[3],
-                 "chosen_model": best[n], "headline_result": headline,
-                 "success_bars": "; ".join(f"{k} >= {v:g}" for k, v in BAR[n].items()),
-                 "achieved": "; ".join(f"{k} = {ACH[n][k]:.2f}" for k in BAR[n]), "verdict": verdict, "note": NOTE[n]})
-    for k, v in BAR[n].items():
-        flat.append({"objective": n, "criterion": k, "bar": v, "achieved": ACH[n][k], "ratio": ACH[n][k] / v})
-S = pd.DataFrame(rows); F = pd.DataFrame(flat)
-
-pd.set_option("display.width", 220, "display.max_columns", 30, "display.max_colwidth", 120)
-print("MACHINE LEARNING OBJECTIVES: WHAT WAS SET, WHAT WAS BUILT, WHAT WAS ACHIEVED\n")
-for _, r in S.iterrows():
-    print(f"OBJECTIVE {r['objective']}: {r['business_objective']}  (owner: {r['owner']})")
-    print(f"  ML task      : {r['ml_task']} ({r['ml_type']}), one row per {r['grain']}")
-    print(f"  Target       : {r['target']}")
-    print(f"  Chosen model : {r['chosen_model']}   ->  {r['headline_result']}")
-    print(f"  Success bars : {r['success_bars']}")
-    print(f"  Achieved     : {r['achieved']}")
-    print(f"  Verdict      : {r['verdict'].upper()}.  {r['note']}\n")
-print(F.assign(ratio=F["ratio"].round(2), achieved=F["achieved"].round(3)).to_string(index=False))
-print(f"\nObjectives met: {(S['verdict'] == 'Met').sum()} of 5, partly met: {(S['verdict'] == 'Partly met').sum()}, not met: {(S['verdict'] == 'Not met').sum()}")
-
-# Figure: achieved / bar for every criterion (1.0 = exactly on the bar)
-COL = {1: "#264653", 2: "#2A9D8F", 3: "#E9C46A", 4: "#F4A261", 5: "#E76F51"}
-plt.rcParams.update({"axes.spines.top": False, "axes.spines.right": False, "axes.grid": True, "grid.alpha": .25, "font.size": 10, "axes.titleweight": "bold"})
-fig, ax = plt.subplots(figsize=(13, 6.8))
-F = F.iloc[::-1].reset_index(drop=True)
-ax.barh(range(len(F)), F["ratio"], color=[COL[o] for o in F["objective"]], height=.65)
-ax.axvline(1, color="#222", lw=1.6, ls="--"); ax.text(1.01, len(F) - .45, "success bar", fontsize=9)
-ax.set_yticks(range(len(F))); ax.set_yticklabels([f"{o}  {c}" for o, c in zip(F["objective"], F["criterion"])])
-for i, r in F.iterrows():
-    ax.text(r["ratio"] + .02, i, f"{r['achieved']:.2f} vs bar {r['bar']:g}", va="center", fontsize=9)
-ax.set(xlabel="achieved divided by the success bar (right of the dashed line = bar reached)", xlim=(0, max(F["ratio"]) * 1.35))
-ax.set_title("Machine learning objectives: result against success bar", fontsize=13)
-plt.tight_layout(); plt.savefig("ml_objectives.png", dpi=140, bbox_inches="tight"); plt.show()
-
-S.to_csv("ml_objectives_scorecard.csv", index=False)
-pd.to_pickle({"scorecard": S, "criteria": F, "bars": BAR}, "ml_objectives.pkl")
-print("\nSaved: ml_objectives.png, ml_objectives_scorecard.csv, ml_objectives.pkl")
-```
-
 ---
 
 ## 18. Business Analysis
@@ -3570,7 +3439,171 @@ print("\nSaved: business_analysis.png, business_analysis_summary.csv, business_a
 
 ---
 
-## 19. Save Model, Scaler and Features
+## 19. Machine Learning Objectives
+
+Before training, every business objective was turned into a machine learning objective with a target, a model type and **success bars** set in the `ML_Objectives` sheet. This section scores each result against its bars.
+
+| # | Business objective | Owner | ML task | Target |
+|---|---|---|---|---|
+| 1 | Cut unplanned downtime and maintenance cost | Asset Integrity and Maintenance | Predictive maintenance (classification), one row per asset-month | `breakdown_next_30d` |
+| 2 | Maximise refinery yield and gross margin | Refining and Planning | Margin prediction (regression), one row per refinery-day | `gross_margin_usd_per_bbl` |
+| 3 | Raise on-time fuel delivery and cut distribution cost | Supply and Distribution | Late delivery prediction (classification), one row per trip | `late_delivery` |
+| 4 | Reduce off-spec product and rework cost | Quality and Blending | Off-spec batch prediction (classification), one row per batch | `off_spec` |
+| 5 | Detect product loss, theft and metering errors | Terminal Operations and Security | Inventory anomaly detection (unsupervised), one row per tank-day | none, checked against an answer key afterwards |
+
+**Scorecard**
+
+| # | Chosen model | Success bar | Achieved | Verdict |
+|---|---|---|---|---|
+| 1 | Logistic Regression | Lift over random in the top 10% of at least 3 | 3.80 | Met |
+| 1 | | Share of breakdowns caught in the top 10% of at least 0.30 | 0.38 | Met |
+| 2 | Ridge Regression | R² of at least 0.80 | 0.85 | Met |
+| 2 | | MAE cut vs last week's margin of at least 0.3 USD/bbl | 0.52 | Met |
+| 3 | Random Forest | ROC AUC of at least 0.75 | 0.79 | Met |
+| 3 | | Share of late trips caught in the top 20% of at least 0.50 | 0.62 | Met |
+| 4 | Logistic Regression | ROC AUC of at least 0.70 | 0.73 | Met |
+| 4 | | Share of off-spec batches caught in the top 20% of at least 0.40 | 0.48 | Met |
+| 5 | Isolation Forest | PR AUC at least 5x chance | 11.1x chance (0.401 vs 0.036) | Met |
+| 5 | | Best model PR AUC at least equal to the simple gap rule | 0.41 of the rule's score | **Not met** |
+
+**Result: 4 of 5 objectives met, 1 partly met, none missed.**
+
+**How to read each verdict**
+
+| # | Verdict | Plain reading |
+|---|---|---|
+| 1 | Met | Wide uncertainty (PR AUC 95% range 0.11 to 0.23). Use it as a ranking aid, not a yes/no verdict. |
+| 2 | Met | Linear Ridge beat the tree models, so margin is largely linear. It forecasts; planners still decide the crude. |
+| 3 | Met | PR AUC 95% range 0.39 to 0.57. Best of four, but the other models are close. |
+| 4 | Met | Weakest classifier (PR AUC range 0.11 to 0.25): the gain over random is real but modest. |
+| 5 | Partly met | The models find recording errors and some theft, but a plain "gap over 1%" rule beats all three. Keep the rule as the control and the model as a second opinion. |
+
+### Charts
+
+<p align="center">
+  <img src="images/ml_objectives.png" alt="Success bars vs achieved results" width="100%">
+</p>
+<p align="center"><em>Success bars vs achieved results</em></p>
+
+### Code: machine learning objectives
+
+```python
+# STEP 16: MACHINE LEARNING OBJECTIVES
+# For each of the five business objectives: what ML task was set, which model was chosen, and did it reach the success bar?
+# The success bars below were set for this project (editable). Every result comes from the Step 14 evaluation files,
+# so nothing is re-trained here.
+import os
+import re
+import warnings
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+warnings.filterwarnings("ignore")
+
+# ------------------------------------------------------------------ SUCCESS BARS (edit freely)
+BAR = {
+    1: {"Lift over random in the top 10%": 3.0, "Share of breakdowns caught in the top 10%": 0.30},
+    2: {"R2": 0.80, "MAE cut vs last week's margin": 0.30},
+    3: {"ROC AUC": 0.75, "Share of late trips caught in the top 20%": 0.50},
+    4: {"ROC AUC": 0.70, "Share of off-spec batches caught in the top 20%": 0.40},
+    5: {"PR AUC as a multiple of chance": 5.0, "Best model PR AUC / simple gap rule PR AUC": 1.0},
+}
+
+def load(n):
+    p = f"obj{n}_evaluation.pkl"
+    if not os.path.exists(p):
+        raise FileNotFoundError(f"{p} is missing. Run Step 14 for Objective {n} first, then re-run this cell.")
+    return pd.read_pickle(p)
+
+ev = {n: load(n) for n in range(1, 6)}
+best = {n: ev[n]["best_model"] for n in ev}
+
+def row(n):
+    r = ev[n]["results"]; return r[r["model"] == best[n]].iloc[0]
+def plan_row(n, label):
+    pl = ev[n]["inspection_plan"]; return pl[pl.iloc[:, 0].astype(str).str.strip() == label].iloc[0]
+
+ACH = {}   # achieved values
+r1, r2, r3, r4, r5 = row(1), row(2), row(3), row(4), row(5)
+pl1, pl3, pl4 = plan_row(1, "10%"), plan_row(3, "20%"), plan_row(4, "20%")
+ACH[1] = {"Lift over random in the top 10%": float(pl1["lift_vs_random"]), "Share of breakdowns caught in the top 10%": float(pl1["recall_%"]) / 100}
+rr = ev[2]["results"]; base2 = rr[rr["model"].str.contains("last week")].iloc[0]
+ACH[2] = {"R2": float(r2["R2"]), "MAE cut vs last week's margin": 1 - float(r2["MAE"]) / float(base2["MAE"])}
+ACH[3] = {"ROC AUC": float(r3["ROC_AUC"]), "Share of late trips caught in the top 20%": float(pl3["recall_%"]) / 100}
+ACH[4] = {"ROC AUC": float(r4["ROC_AUC"]), "Share of off-spec batches caught in the top 20%": float(pl4["recall_%"]) / 100}
+res5 = ev[5]["results"]; rule5 = res5[res5["model"].str.startswith("Rule")].iloc[0]
+n_anom = sum(int(re.search(r"n=(\d+)", i).group(1)) for i in ev[5]["recall_by_type"].index)
+n_days = len(globals()["pred5"]) if "pred5" in globals() else (len(pd.read_pickle("obj5_scores.pkl")) if os.path.exists("obj5_scores.pkl") else 10182)
+chance5 = n_anom / n_days
+ACH[5] = {"PR AUC as a multiple of chance": float(r5["PR_AUC"]) / chance5, "Best model PR AUC / simple gap rule PR AUC": float(r5["PR_AUC"]) / float(rule5["PR_AUC"])}
+
+TASKS = {
+    1: ("Predictive maintenance", "Classification", "breakdown_next_30d", "asset-month", "Asset Integrity and Maintenance", "Cut unplanned downtime and maintenance cost"),
+    2: ("Margin prediction", "Regression", "gross_margin_usd_per_bbl", "refinery-day", "Refining and Planning", "Maximise refinery yield and gross margin"),
+    3: ("Late delivery prediction", "Classification", "late_delivery", "trip", "Supply and Distribution", "Raise on-time delivery and cut distribution cost"),
+    4: ("Off-spec batch prediction", "Classification", "off_spec", "batch", "Quality and Blending", "Reduce off-spec product and rework cost"),
+    5: ("Inventory anomaly detection", "Unsupervised anomaly detection", "none (checked against answer key afterwards)", "tank-day", "Terminal Operations and Security", "Detect product loss, theft and metering errors"),
+}
+NOTE = {
+    1: f"Wide uncertainty: PR AUC 95% range {r1['PR_AUC_95%_range']}. Use as a ranking aid, not a yes/no verdict.",
+    2: "Linear Ridge beat the tree models, so the margin relationship is largely linear. Forecast only; planners still decide the crude.",
+    3: f"PR AUC 95% range {r3['PR_AUC_95%_range']}. Best of the four, but the other models are close.",
+    4: f"Weakest classifier: PR AUC 95% range {r4['PR_AUC_95%_range']}, so the gain over random is real but modest.",
+    5: "Models find recording errors and some theft, but a plain 'gap over 1%' rule beats all three. Keep the rule as the control, the model as a second opinion.",
+}
+
+rows, flat = [], []
+for n in range(1, 6):
+    ok = {k: ACH[n][k] >= v for k, v in BAR[n].items()}
+    verdict = "Met" if all(ok.values()) else ("Partly met" if any(ok.values()) else "Not met")
+    t = TASKS[n]
+    headline = {1: f"PR AUC {r1['PR_AUC']}, ROC AUC {r1['ROC_AUC']}", 2: f"MAE {r2['MAE']} USD/bbl, RMSE {r2['RMSE']}, R2 {r2['R2']}",
+                3: f"PR AUC {r3['PR_AUC']}, ROC AUC {r3['ROC_AUC']}", 4: f"PR AUC {r4['PR_AUC']}, ROC AUC {r4['ROC_AUC']}",
+                5: f"PR AUC {r5['PR_AUC']} (chance {chance5:.3f}), ROC AUC {r5['ROC_AUC']}"}[n]
+    rows.append({"objective": n, "business_objective": t[5], "owner": t[4], "ml_task": t[0], "ml_type": t[1], "target": t[2], "grain": t[3],
+                 "chosen_model": best[n], "headline_result": headline,
+                 "success_bars": "; ".join(f"{k} >= {v:g}" for k, v in BAR[n].items()),
+                 "achieved": "; ".join(f"{k} = {ACH[n][k]:.2f}" for k in BAR[n]), "verdict": verdict, "note": NOTE[n]})
+    for k, v in BAR[n].items():
+        flat.append({"objective": n, "criterion": k, "bar": v, "achieved": ACH[n][k], "ratio": ACH[n][k] / v})
+S = pd.DataFrame(rows); F = pd.DataFrame(flat)
+
+pd.set_option("display.width", 220, "display.max_columns", 30, "display.max_colwidth", 120)
+print("MACHINE LEARNING OBJECTIVES: WHAT WAS SET, WHAT WAS BUILT, WHAT WAS ACHIEVED\n")
+for _, r in S.iterrows():
+    print(f"OBJECTIVE {r['objective']}: {r['business_objective']}  (owner: {r['owner']})")
+    print(f"  ML task      : {r['ml_task']} ({r['ml_type']}), one row per {r['grain']}")
+    print(f"  Target       : {r['target']}")
+    print(f"  Chosen model : {r['chosen_model']}   ->  {r['headline_result']}")
+    print(f"  Success bars : {r['success_bars']}")
+    print(f"  Achieved     : {r['achieved']}")
+    print(f"  Verdict      : {r['verdict'].upper()}.  {r['note']}\n")
+print(F.assign(ratio=F["ratio"].round(2), achieved=F["achieved"].round(3)).to_string(index=False))
+print(f"\nObjectives met: {(S['verdict'] == 'Met').sum()} of 5, partly met: {(S['verdict'] == 'Partly met').sum()}, not met: {(S['verdict'] == 'Not met').sum()}")
+
+# Figure: achieved / bar for every criterion (1.0 = exactly on the bar)
+COL = {1: "#264653", 2: "#2A9D8F", 3: "#E9C46A", 4: "#F4A261", 5: "#E76F51"}
+plt.rcParams.update({"axes.spines.top": False, "axes.spines.right": False, "axes.grid": True, "grid.alpha": .25, "font.size": 10, "axes.titleweight": "bold"})
+fig, ax = plt.subplots(figsize=(13, 6.8))
+F = F.iloc[::-1].reset_index(drop=True)
+ax.barh(range(len(F)), F["ratio"], color=[COL[o] for o in F["objective"]], height=.65)
+ax.axvline(1, color="#222", lw=1.6, ls="--"); ax.text(1.01, len(F) - .45, "success bar", fontsize=9)
+ax.set_yticks(range(len(F))); ax.set_yticklabels([f"{o}  {c}" for o, c in zip(F["objective"], F["criterion"])])
+for i, r in F.iterrows():
+    ax.text(r["ratio"] + .02, i, f"{r['achieved']:.2f} vs bar {r['bar']:g}", va="center", fontsize=9)
+ax.set(xlabel="achieved divided by the success bar (right of the dashed line = bar reached)", xlim=(0, max(F["ratio"]) * 1.35))
+ax.set_title("Machine learning objectives: result against success bar", fontsize=13)
+plt.tight_layout(); plt.savefig("ml_objectives.png", dpi=140, bbox_inches="tight"); plt.show()
+
+S.to_csv("ml_objectives_scorecard.csv", index=False)
+pd.to_pickle({"scorecard": S, "criteria": F, "bars": BAR}, "ml_objectives.pkl")
+print("\nSaved: ml_objectives.png, ml_objectives_scorecard.csv, ml_objectives.pkl")
+```
+
+---
+
+## 20. Save Model, Scaler and Features
 
 Everything is saved with `joblib`: for each objective the chosen model, the fitted scaler (with its imputer) and the exact feature list, plus a `model_registry.joblib` and a small `meridian_predict.py` helper.
 
@@ -3734,7 +3767,7 @@ print(f"Files in {PKG}/:", ", ".join(sorted(f for f in os.listdir(PKG) if f != "
 
 ---
 
-## 20. Download Model, Scaler and Features
+## 21. Download Model, Scaler and Features
 
 The 17 files are zipped into `meridian_model_package.zip` (about 2.7 MB, so no GitHub size problem) for download. Unzip it as the `model` folder next to `app.py`.
 
@@ -4323,7 +4356,7 @@ st.sidebar.caption("Decision support only. Built from the Meridian ML project (s
 
 ---
 
-## 21. Key Findings and Insights
+## 22. Key Findings and Insights
 
 **Objective 1: breakdowns**
 - Breakdowns are rare (4.6% of asset-months), so this is a ranking tool. Servicing the riskiest 10% catches 38% of breakdowns, 3.8x better than random. PR AUC is only 0.155 with a wide range (0.11 to 0.23).
@@ -4364,7 +4397,7 @@ st.sidebar.caption("Decision support only. Built from the Meridian ML project (s
 
 ---
 
-## 22. Recommendations
+## 23. Recommendations
 
 In priority order, by size of value and ease of starting:
 
@@ -4383,7 +4416,7 @@ In priority order, by size of value and ease of starting:
 
 ---
 
-## 23. Impact
+## 24. Impact
 
 Annual figures are scaled from each test window to 365 days. They are indicative until Finance confirms the cost assumptions.
 
@@ -4419,7 +4452,7 @@ Resampling each test period 500 times gives a 90% range of **$2.96M to $5.72M** 
 
 ---
 
-## 24. Conclusion
+## 25. Conclusion
 
 I built a full prediction system for a downstream oil and gas business: eight messy tables cleaned and joined in a star schema, five modelling tables, a date-based split, four models per objective plus three anomaly detectors, all saved with joblib and served in a seven-page Streamlit app.
 
