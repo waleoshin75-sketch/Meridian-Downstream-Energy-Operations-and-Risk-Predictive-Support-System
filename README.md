@@ -2,7 +2,12 @@
 
 **A Real Time Predictive Analytics to Optimize Refining Yields, Prevent Downtime, and Secure Operational Margins**
 
-**Python | pandas | scikit-learn | Streamlit** | Five predictive models for a fictional downstream oil and gas company
+<p align="left">
+<img src="https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white" alt="Python">
+<img src="https://img.shields.io/badge/scikit--learn-1.6-F7931E?logo=scikitlearn&logoColor=white" alt="scikit-learn">
+<img src="https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit">
+<img src="https://img.shields.io/badge/Models-5-2E7D32" alt="Five models">
+</p>
 
 **Author:** Adewale Oshinukan | Data Scientist | [GitHub](https://github.com/waleoshin75-sketch) | [Live App](https://meridiandownstreamenergyoperationsandriskpredictivesupportsys.streamlit.app/)
 
